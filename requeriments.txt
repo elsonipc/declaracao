@@ -4,3 +4,4 @@ docx
 io
 base64
 os
+Document
