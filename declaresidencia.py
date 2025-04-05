@@ -8,7 +8,7 @@ import base64
 import os
 
 # Configuração do Streamlit
-st.set_page_config(page_title="Gerador de Declarações de Residência By IPC Elson Brito", layout="wide")
+st.set_page_config(page_title="Gerador de Declarações", layout="wide")
 st.title("Gerador de Declarações")
 
 # Expressões regulares para extrair os campos
@@ -33,6 +33,15 @@ def aplicar_formatacao(run):
     run._element.rPr.rFonts.set(qn('w:eastAsia'), "Arial")
     run.font.size = Pt(13)
 
+# Carrega o modelo DOCX (ajustado para Streamlit Cloud)
+def load_docx_template():
+    modelo_path = os.path.join(os.path.dirname(__file__), "modelo.docx")
+    if os.path.exists(modelo_path):
+        return Document(modelo_path)
+    else:
+        st.error("Arquivo modelo.docx não encontrado!")
+        st.stop()
+
 # Campo para colar o texto
 texto_copiado = st.text_area("Cole o texto com os dados abaixo:", height=200)
 
@@ -46,17 +55,10 @@ if st.button("Gerar Declaração"):
             match = re.search(padrao, texto_copiado, re.MULTILINE)
             dados_extraidos[campo] = match.group(1) if match else "N/A"
 
-        # Verifica se o modelo existe
-        modelo_path = "modelo.docx"
-        if not os.path.exists(modelo_path):
-            st.error("Arquivo modelo.docx não encontrado!")
-            st.stop()
-
         try:
-            # Carrega o modelo .docx
-            doc = Document(modelo_path)
+            doc = load_docx_template()
 
-            # Substitui os campos no corpo do texto
+            # Substitui os campos no documento
             for paragrafo in doc.paragraphs:
                 for campo, valor in dados_extraidos.items():
                     if f"{{{campo}}}" in paragrafo.text:
@@ -64,7 +66,6 @@ if st.button("Gerar Declaração"):
                         run = paragrafo.add_run(valor)
                         aplicar_formatacao(run)
 
-            # Substitui os campos dentro das tabelas
             for tabela in doc.tables:
                 for linha in tabela.rows:
                     for celula in linha.cells:
@@ -106,6 +107,4 @@ st.sidebar.markdown("""
 2. Clique no botão "Gerar Declaração"
 3. Faça o download do documento gerado
 4. Verifique os dados extraídos se necessário
-
-
 """)
