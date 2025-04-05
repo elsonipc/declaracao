@@ -1,7 +1,2 @@
-streamlit
-re
-docx
-io
-base64
-os
-Document
+streamlit==1.28.0
+python-docx==0.8.11
